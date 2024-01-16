@@ -1,0 +1,44 @@
+<variant-radios class="no-js-hidden" data-section="{{ section_id }}" data-url="{{ card_product.url }}" {{ block.shopify_attributes }}>
+{%- for option in card_product.options_with_values -%}
+<fieldset class="js product-form__input fieldset--{{ option.name }}">
+<legend class="form__label">
+{{ option.name }}
+{% if option.name == "Color" or option.name == "Colors" %}
+<span id="clr-name">
+{% if option.selected_value %}
+{{ option.selected_value }}
+{% endif %}
+</span>
+{% endif %}
+</legend>
+{%- for value in option.values -%}
+<input class="{% if option.name == "Color" or option.name == "Colors" %}swatchesRadio{% endif %}"
+type="radio" id="{{ section_id }}-{{ option.position }}-{{ forloop.index0 }}"
+name="{{ option.name }}"
+value="{{ value | escape }}"
+form="{{ product_form_id }}"
+
+>
+{% assign variant = card_product.selected_or_first_available_variant %}
+{% if option.name == "Color" or option.name == "Colors" or option.name == "Letter" %}
+{% assign image_url = value | handleize | downcase | append: '.png' | file_url %}
+<label class="jkb1 color-options color-{{ value | handle }}"
+for="{{ section_id }}-{{ option.position }}-{{ forloop.index0 }}"
+style="background: url({{ image_url }});background-color:{{ value | handleize }}; width: 33px; height: 33px; background-size: cover;">
+<span class="swatches-options visually-hidden">{{ value }}</span>
+<span class="variant--unavailable"></span>
+</label>
+{% else %}
+<label class="jkb2 ar-set-clr" for="{{ section_id }}-{{ option.position }}-{{ forloop.index0 }}" aria-label="{{ value }}">
+{{ value }}
+<span class="variant--unavailable"></span>
+</label>
+{% endif %}
+{%- endfor -%}
+</fieldset>
+{%- endfor -%}
+
+<script type="application/json">
+{{ card_product.variants | json }}
+</script>
+</variant-radios>
