@@ -143,7 +143,7 @@
 <h2>test</h2>
   
               {%- unless card_product.has_only_default_variant -%}
-              
+                {%- if block.settings.picker_type == 'button' -%}
                   <variant-radios
                     class="no-js-hidden"
                     data-section="{{ section.id }}"
@@ -244,7 +244,7 @@
                       {{ card_product.variants | json }}
                     </script>
                   </variant-selects>
-              
+                {%- endif -%}
               {%- endunless -%}
 
               <noscript class="product-form__noscript-wrapper-{{ section.id }}">
