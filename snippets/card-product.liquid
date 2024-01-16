@@ -141,12 +141,12 @@
         <div class="card__information">
   <h2>test</h2>
   
-              {%- unless product.has_only_default_variant -%}
+              {%- unless card_product.has_only_default_variant -%}
                 {%- if block.settings.picker_type == 'button' -%}
                   <variant-radios
                     class="no-js-hidden"
                     data-section="{{ section.id }}"
-                    data-url="{{ product.url }}"
+                    data-url="{{ card_product.url }}"
                     {{ block.shopify_attributes }}
                   >
                     {%- for option in product.options_with_values -%}
@@ -165,7 +165,7 @@
                           >
 
                         <!-- color swatches -->
-                 {% if product.variants[forloop.index0].metafields.custom.color and option.name == 'Color' %}
+                 {% if card_product.variants[forloop.index0].metafields.custom.color and option.name == 'Color' %}
                               <label for="{{ section.id }}-{{ option.position }}-{{ forloop.index0 }}" style="background-color: {{product.variants[forloop.index0].metafields.custom.color}}">
                                 &nbsp;
                               </label>
@@ -201,17 +201,17 @@
                       </fieldset>
                     {%- endfor -%}
                     <script type="application/json">
-                      {{ product.variants | json }}
+                      {{ card_product.variants | json }}
                     </script>
                   </variant-radios>
                 {%- else -%}
                   <variant-selects
                     class="no-js-hidden"
                     data-section="{{ section.id }}"
-                    data-url="{{ product.url }}"
+                    data-url="{{ card_product.url }}"
                     {{ block.shopify_attributes }}
                   >
-                    {%- for option in product.options_with_values -%}
+                    {%- for option in card_product.options_with_values -%}
                       <div class="product-form__input product-form__input--dropdown">
                         <label class="form__label" for="Option-{{ section.id }}-{{ forloop.index0 }}">
                           {{ option.name }}
@@ -240,7 +240,7 @@
                     {%- endfor -%}
 
                     <script type="application/json">
-                      {{ product.variants | json }}
+                      {{ card_product.variants | json }}
                     </script>
                   </variant-selects>
                 {%- endif -%}
@@ -258,9 +258,9 @@
                       class="select__select"
                       form="{{ product_form_id }}"
                     >
-                      {%- for variant in product.variants -%}
+                      {%- for variant in card_product.variants -%}
                         <option
-                          {% if variant == product.selected_or_first_available_variant %}
+                          {% if variant == card_product.selected_or_first_available_variant %}
                             selected="selected"
                           {% endif %}
                           {% if variant.available == false %}
