@@ -124,20 +124,6 @@
     "sections": {
       "announcement-bar": {
         "type": "announcement-bar",
-        "blocks": {
-          "announcement-bar-0": {
-            "type": "announcement",
-            "settings": {
-              "text": "Welcome to our store",
-              "text_alignment": "center",
-              "color_scheme": "accent-1",
-              "link": ""
-            }
-          }
-        },
-        "block_order": [
-          "announcement-bar-0"
-        ],
         "settings": {
         }
       },
@@ -242,7 +228,7 @@
         "type": "custom-header",
         "settings": {
           "menu": "top-menu",
-          "color_scheme": "background-1"
+          "color_scheme": "accent-1"
         }
       }
     },
