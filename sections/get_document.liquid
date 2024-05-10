@@ -1,6 +1,24 @@
+
+{% for document in shop.metaobjects.documents.value %}
+  {{ document.document_name }}
+
+      
+{{ document.select_file }}
+
+  
+  {% endfor %}
+
+
+
+
 {% schema %}
   {
-    "name": "Section name",
-    "settings": []
+    "name": "get document",
+    "settings": [],
+    "presets": [
+      {
+        "name": "Get Documents"
+      }
+    ]
   }
 {% endschema %}
