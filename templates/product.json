@@ -20,16 +20,6 @@
           "settings": {
           }
         },
-        "5f940b22-7bb5-4b3a-9590-6b236a382fbd": {
-          "type": "shopify:\/\/apps\/product-reviews\/blocks\/star_rating\/bae150af-8da8-48b2-9867-398188115e5f",
-          "settings": {
-            "stars_fill_color": "#35acee",
-            "star_size": 15,
-            "text_align": "flex-start",
-            "product": "{{product}}",
-            "stars_text_empty": "No reviews"
-          }
-        },
         "6c9cedc8-f1cb-470e-a779-ba4e5506b030": {
           "type": "rating",
           "disabled": true,
@@ -105,19 +95,12 @@
           "settings": {
             "share_label": "Share"
           }
-        },
-        "77c4ac8f-9bf1-4c69-8cf8-9172b21ea019": {
-          "type": "shopify:\/\/apps\/product-reviews\/blocks\/reviews\/bae150af-8da8-48b2-9867-398188115e5f",
-          "disabled": true,
-          "settings": {
-          }
         }
       },
       "block_order": [
         "vendor",
         "title",
         "price",
-        "5f940b22-7bb5-4b3a-9590-6b236a382fbd",
         "6c9cedc8-f1cb-470e-a779-ba4e5506b030",
         "variant_picker",
         "quantity_selector",
@@ -128,13 +111,12 @@
         "collapsible-row-1",
         "collapsible-row-2",
         "collapsible-row-3",
-        "share",
-        "77c4ac8f-9bf1-4c69-8cf8-9172b21ea019"
+        "share"
       ],
       "settings": {
         "enable_sticky_info": true,
         "media_position": "left",
-        "gallery_layout": "stacked",
+        "gallery_layout": "thumbnail",
         "media_size": "large",
         "mobile_thumbnails": "hide",
         "hide_variants": true,
@@ -242,18 +224,17 @@
     },
     "16845737186ffd37d3": {
       "type": "apps",
-      "blocks": {
-        "77182aa4-9833-4041-ac6f-7bde4bbad60a": {
-          "type": "shopify:\/\/apps\/product-reviews\/blocks\/reviews\/bae150af-8da8-48b2-9867-398188115e5f",
-          "settings": {
-          }
-        }
-      },
-      "block_order": [
-        "77182aa4-9833-4041-ac6f-7bde4bbad60a"
-      ],
       "settings": {
         "include_margins": true
+      }
+    },
+    "custom_liquid_nJEWVc": {
+      "type": "custom-liquid",
+      "settings": {
+        "custom_liquid": "{{product.metafields.custom.get_document.document_name}}",
+        "color_scheme": "background-1",
+        "padding_top": 40,
+        "padding_bottom": 52
       }
     }
   },
@@ -262,6 +243,7 @@
     "image-with-text",
     "multicolumn",
     "product-recommendations",
-    "16845737186ffd37d3"
+    "16845737186ffd37d3",
+    "custom_liquid_nJEWVc"
   ]
 }
