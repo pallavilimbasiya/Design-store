@@ -231,7 +231,7 @@
     "custom_liquid_nJEWVc": {
       "type": "custom-liquid",
       "settings": {
-        "custom_liquid": "{{product.metafields.custom.get_document.document_name}}",
+        "custom_liquid": "{{product.metafields.custom.get_document}}",
         "color_scheme": "background-1",
         "padding_top": 40,
         "padding_bottom": 52
