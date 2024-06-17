@@ -2,6 +2,6 @@
     <script src="{{ 'facets.js' | asset_url }}" defer="defer"></script>
  
       <aside aria-labelledby="verticalTitle" class="facets-wrapper facets-wrapper--no-filters page-width" id="main-collection-filters" data-id="">
-        {% render 'facets', results: collection, enable_filtering: section.settings.enable_filtering, enable_sorting: section.settings.enable_sorting, filter_type: section.settings.filter_type %}
+        {% render 'facets', results: collection, enable_filtering: section.settings.enable_filtering, enable_sorting: section.settings.enable_sorting, filter_type: 'vertical' %}
       </aside>
  
