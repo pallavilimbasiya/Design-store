@@ -1,6 +1,1332 @@
-{% schema %}
-  {
-    "name": "Section name",
-    "settings": []
+{% javascript %}
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+
+ 
+
+  let selectedCategory = null;
+  let selectedSubcategory = null;
+  let selectedSystemName = null;
+  let selectedDocs = [];
+  let activeFilters = [];
+  let selectedTabName = null; // Variable to store the selected tab name
+ 
+
+
+
+  // Function to update the active filters display
+ function updateActiveFilters() {
+    const catTags = document.querySelector('.cat-tags');
+    catTags.innerHTML = '';
+
+    // Add selected category, subcategory, system name, and tab name if they exist
+    if (selectedCategory) {
+      catTags.innerHTML += `<span class="active-filter" data-filter="category">${selectedCategory} <span class="clear"><i class="fa fa-times" aria-hidden="true"></i></span></span>`;
+    }
+    if (selectedSubcategory) {
+      catTags.innerHTML += `<span class="active-filter" data-filter="subcategory">${selectedSubcategory} <span class="clear"><i class="fa fa-times" aria-hidden="true"></i></span></span>`;
+    }
+    if (selectedSystemName) {
+      catTags.innerHTML += `<span class="active-filter" data-filter="system">${selectedSystemName} <span class="clear"><i class="fa fa-times" aria-hidden="true"></i></span></span>`;
+    }
+    if (selectedTabName) {
+      catTags.innerHTML += `<span class="active-filter" data-filter="tab">${selectedTabName} <span class="clear"><i class="fa fa-times" aria-hidden="true"></i></span></span>`;
+    }
+
+    // Attach event listeners to the clear buttons of the active filters
+    const clearButtons = document.querySelectorAll('.active-filter .clear');
+    clearButtons.forEach(function(button) {
+      button.addEventListener('click', function() {
+        // Remove the parent active-filter span
+        this.parentElement.remove();
+
+        // Reset corresponding filter variables based on the filter removed
+        const filterType = this.parentElement.getAttribute('data-filter');
+        if (filterType === 'category') {
+          selectedCategory = null;
+          selectedSubcategory = null;
+          selectedSystemName = null;
+        } else if (filterType === 'subcategory') {
+          selectedSubcategory = null;
+          selectedSystemName = null;
+        } else if (filterType === 'system') {
+          selectedSystemName = null;
+        } else if (filterType === 'tab') {
+          selectedTabName = null;
+        }
+
+        // Update document display and count based on the updated filters
+        filterDocuments();
+      });
+    });
   }
+
+  // Handle category click using event delegation
+  document.querySelector('.cat-list').addEventListener('click', function(event) {
+    const target = event.target;
+     if (target.classList.contains('details-tab')) {
+      const subList = target.querySelector('.sub-list');
+      subList.style.display = subList.style.display === 'none' ? 'block' : 'none';
+      selectedCategory = target.getAttribute('data-category');
+      selectedSubcategory = null;
+      selectedSystemName = null;
+      filterDocuments(selectedCategory, selectedSubcategory, selectedSystemName);
+      updateActiveFilters();
+    }
+    if (target.classList.contains('category-item')) {
+      const subList = target.querySelector('.sub-list');
+      subList.style.display = subList.style.display === 'none' ? 'block' : 'none';
+      selectedCategory = target.getAttribute('data-category');
+      selectedSubcategory = null;
+      selectedSystemName = null;
+      filterDocuments(selectedCategory, selectedSubcategory, selectedSystemName);
+      updateActiveFilters();
+    }
+    if (target.classList.contains('subcategory-item')) {
+      event.stopPropagation();
+      selectedSubcategory = target.getAttribute('data-subcategory');
+      selectedSystemName = null;
+      const systemList = target.querySelector('.system-list');
+      systemList.style.display = systemList.style.display === 'none' ? 'block' : 'none';
+      filterDocuments(selectedCategory, selectedSubcategory, selectedSystemName);
+      updateActiveFilters();
+    }
+    if (target.classList.contains('system-name')) {
+      event.preventDefault();
+      selectedSystemName = target.getAttribute('data-product');
+
+      // Get the category and subcategory from the DOM
+      const categoryItem = target.closest('.category-item');
+      const subcategoryItem = target.closest('.subcategory-item');
+
+      if (categoryItem) {
+        selectedCategory = categoryItem.getAttribute('data-category');
+      }
+
+      if (subcategoryItem) {
+        selectedCategory = subcategoryItem.closest('.category-item').getAttribute('data-category');
+        selectedSubcategory = subcategoryItem.getAttribute('data-subcategory');
+      }
+
+      filterDocuments(selectedCategory, selectedSubcategory, selectedSystemName);
+      updateActiveFilters();
+      event.stopPropagation();
+    }
+  });
+
+  
+  // Handle clear filter button click
+document.querySelector('.cat-tags').addEventListener('click', function(event) {
+  if (event.target.classList.contains('clear')) {
+    const filterElement = event.target.parentElement;
+    const filterType = filterElement.getAttribute('data-filter');
+    if (filterType === 'category') {
+      selectedCategory = null;
+      selectedSubcategory = null;
+      selectedSystemName = null;
+    } else if (filterType === 'subcategory') {
+      selectedSubcategory = null;
+      selectedSystemName = null;
+    } else if (filterType === 'system') {
+      selectedSystemName = null;
+    } else if (filterType === 'tab') { // If the clear button belongs to a tab filter
+      selectedTabName = null;
+      document.querySelector('#document-container').style.display = 'block'; // Show document container
+      document.querySelector('.tabbing-list-sec').style.display = 'block'; // Show tabbing list section
+    }
+    filterElement.remove();
+    filterDocuments(selectedCategory, selectedSubcategory, selectedSystemName);
+    updateActiveFilters();
+  }
+});
+
+
+  
+
+  document.querySelector('.document-listing').addEventListener('change', function(event) {
+    const target = event.target;
+    if (target.classList.contains('doc-checkbox')) {
+      const docName = target.getAttribute('data-doc-name');
+      const docUrl = target.getAttribute('data-doc-url');
+     
+      
+      if (target.checked) {
+        selectedDocs.push({ name: docName, url: docUrl });
+          if(target.parentNode.parentNode.nextElementSibling){
+              target.parentNode.parentNode.nextElementSibling.classList.add("checkedd");
+            }
+      } else {
+        selectedDocs = selectedDocs.filter(doc => doc.url !== docUrl);
+         if(target.parentNode.parentNode.nextElementSibling){
+             target.parentNode.parentNode.nextElementSibling.classList.remove("checkedd");
+         }
+      }
+      updateSelectedDocsList();
+    }
+     
+  });
+
+  
+  document.querySelector('.download-btn').addEventListener('click', function() {
+    if (selectedDocs.length > 0) {
+      downloadAsZip(selectedDocs);
+    } else {
+      alert('No documents selected.');
+    }
+  });
+
+  function updateSelectedDocsList() {
+    const selectedDocsList = document.getElementById('selected-docs-list');
+    selectedDocsList.innerHTML = '';
+    selectedDocs.forEach(doc => {
+      const docElement = document.createElement('div');
+      docElement.className = 'selected-doc';
+      docElement.innerHTML = `<span>${doc.name}</span>`;
+      selectedDocsList.appendChild(docElement);
+    });
+    updateSelectedDocsCounter();
+  }
+
+  function updateSelectedDocsCounter() {
+    const selectedDocsCount = document.getElementById('selected-docs-count');
+    selectedDocsCount.innerText = selectedDocs.length;
+  }
+
+
+  // Debounce the search input
+  const searchInput = document.querySelector('.search-action input');
+  let searchTimeout;
+  searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(function() {
+      const searchText = searchInput.value.toLowerCase();
+      filterDocuments(selectedCategory, selectedSubcategory, selectedSystemName, searchText);
+    }, 300);
+  });
+  
+function filterDocuments(category, subcategory, systemName, searchText = '') {
+    let documents = document.querySelectorAll('.doc-list , .documents-tab ');
+    let totalDocuments = documents.length;
+    let visibleDocuments = 0;
+
+    documents.forEach(function(doc) {
+        let docCategory = doc.getAttribute('data-category');
+        let docSubcategory = doc.getAttribute('data-subcategory');
+        let docSystemName = doc.getAttribute('data-product');
+        let docNameElement = doc.querySelector('.doc-name');
+        let docName = docNameElement ? docNameElement.innerText.toLowerCase() : '';
+        let showDoc = true;
+
+        if (category && docCategory !== category) {
+            showDoc = false;
+        }
+        if (subcategory && docSubcategory !== subcategory) {
+            showDoc = false;
+        }
+        if (systemName && docSystemName !== systemName) {
+            showDoc = false;
+        }
+        if (searchText && !docName.includes(searchText.toLowerCase())) {
+            showDoc = false;
+        }
+
+        if (showDoc) {
+            doc.style.display = 'flex';
+            visibleDocuments++;
+        } else {
+            doc.style.display = 'none';
+        }
+    });
+
+    document.getElementById('document-count').innerText = `1 - ${visibleDocuments}`;
+    document.getElementById('total-documents').innerText = totalDocuments;
+}
+
+
+function downloadAsZip(docs) {
+  const zip = new JSZip();
+  const promises = docs.map(doc => {
+    return fetch(doc.url)
+      .then(response => response.blob())
+      .then(blob => {
+        zip.file(doc.name + '.pdf', blob);
+      });
+  });
+
+  // Include CAD ZIP files if available
+  const cadDownload = document.querySelectorAll('.cad-download.checkedd a');
+  cadDownload.forEach((cadDownload, index) => {
+    if (cadDownload) {
+      let cadUrl = cadDownload.getAttribute('href');
+      // console.log(cadUrl);
+      promises.push(fetch(cadUrl)  
+        .then(response => response.blob())
+        .then(blob => {
+          zip.file(`cad_file_${index + 1}.zip`, blob); // Add each CAD file with a unique name
+          // console.log("<b>"+ cadUrl + "</b>");
+        }));
+    }
+  });
+
+  Promise.all(promises)
+    .then(() => {
+      zip.generateAsync({ type: 'blob' })
+        .then(content => {
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(content);
+          a.download = 'selected_documents.zip';
+          a.click();
+        });
+    })
+    .catch(error => {
+      console.error('Error creating ZIP file:', error);
+    });
+}
+
+  
+  document.querySelector('.top-bar').addEventListener('click', function() {
+    document.querySelector('.selected-docs').classList.toggle('selected-doc-active');
+    document.querySelector('.mylist-box').classList.toggle('hidden');
+  });
+
+  // Function to filter documents based on the selected tab
+  function filterDocumentsByTab(tabId) {
+    const documents = document.querySelectorAll('.documents-tab');
+    documents.forEach(function(doc) {
+      if (doc.id === tabId) {
+        doc.style.display = 'block';
+      } else {
+        doc.style.display = 'none';
+      }
+    });
+  }
+
+// Add event listeners to tab elements
+const tabs = document.querySelectorAll('.tab');
+tabs.forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    const tabId = this.id;
+    selectedTabName = this.innerText.trim(); // Update the selected tab name
+    selectedCategory = null; // Clear selected category
+    selectedSubcategory = null; // Clear selected subcategory
+    selectedSystemName = null; // Clear selected system name
+    
+    // Show the relevant documents and hide the document container
+    filterDocumentsByTab(tabId);
+    document.querySelector('#document-container').style.display = 'none'; // Hide document container
+    document.querySelector('.tabbing-list-sec').style.display = 'block'; // Ensure tabbing list section is visible
+    updateActiveFilters(); // Update the active filters display
+  });
+});
+ 
+
+  window.onload=function(){
+        // var url = location.href;
+         // document.getElementById("url").innerHTML = url;
+         if(window.location.href.indexOf("details-tab") > -1 ){
+           
+            document.getElementById("details-tab").click();
+           
+        }
+        else if(window.location.href.indexOf("specifications") > -1){
+            document.getElementById("specifications").click();
+        }
+           else if(window.location.href.indexOf("testing-approval") > -1){
+            document.getElementById("testing-approval").click();
+        }
+              else if(window.location.href.indexOf("technical-data") > -1){
+            document.getElementById("technical-data").click();
+        }
+                 else if(window.location.href.indexOf("safety-data") > -1){
+            document.getElementById("safety-data").click();
+        }
+                     else if(window.location.href.indexOf("application") > -1){
+            document.getElementById("application").click();
+        }
+                         else if(window.location.href.indexOf("technical-bulletins") > -1){
+            document.getElementById("technical-bulletins").click();
+        }
+                            else if(window.location.href.indexOf("literature") > -1){
+            document.getElementById("literature").click();
+        }
+        else{
+           
+        }
+
+
+
+    };
+
+
+
+
+
+
+
+  
+
+// Add event listener to details tab
+const detailsTab = document.querySelector('.details-tab');
+detailsTab.addEventListener('click', function() {
+  const documentContainer = document.querySelector('#document-container');
+  const tabbingListSec = document.querySelector('.tabbing-list-sec');
+
+  document.querySelectorAll('.documents-tab').forEach(function(doc) {
+    doc.style.display = 'none'; // Hide all documents tabs
+  });
+
+  documentContainer.style.display = 'block'; // Show document container
+  tabbingListSec.style.display = 'none'; // Hide tabbing list section
+  
+  selectedTabName = null; // Clear selected tab name
+  updateActiveFilters(); // Update the active filters display
+});
+
+  // Initial state: Show both sections
+  document.querySelector('#document-container').style.display = 'block';
+  document.querySelector('.tabbing-list-sec').style.display = 'block';
+
+
+
+
+
+
+//Pagination start
+  
+pageSizeDocList = 2;
+pageSizeDocumentsTab = 15;
+incremSlide = 5;
+startPage = 0;
+numberPage = 0;
+
+// Calculate total pages based on the maximum of doc-list and documents-tab page counts
+var pageCountDocList = Math.ceil($(".doc-list").length / pageSizeDocList);
+var pageCountDocumentsTab = Math.ceil($(".documents-tab").length / pageSizeDocumentsTab);
+var pageCount = Math.max(pageCountDocList, pageCountDocumentsTab);
+var totalSlidepPage = Math.ceil(pageCount / incremSlide);
+
+// Function to handle pagination setup
+function setupPagination() {
+    // Check if more than 20 documents-tab elements exist, then enable pagination
+    if ($(".documents-tab").length > 20) {
+        for (var i = 0; i < pageCount; i++) {
+            $("#pagin").append('<li><a href="#">' + (i + 1) + '</a></li>');
+            if (i >= incremSlide) {
+                $("#pagin li").eq(i + 1).hide();
+            }
+        }
+
+        var prev = $("<li/>").addClass("prev").html("Prev").click(function () {
+            startPage -= incremSlide;
+            incremSlide -= 5;
+            numberPage--;
+            slide();
+        });
+
+        prev.hide();
+
+        var next = $("<li/>").addClass("next").html("Next").click(function () {
+            startPage += 5;
+            incremSlide += 5;
+            numberPage++;
+            slide();
+        });
+
+        $("#pagin").prepend(prev).append(next);
+
+        $("#pagin li").first().find("a").addClass("current");
+
+        slide = function (sens) {
+            $("#pagin li").hide();
+
+            for (var t = startPage; t < incremSlide; t++) {
+                $("#pagin li").eq(t + 1).show();
+            }
+            if (startPage == 0) {
+                next.show();
+                prev.hide();
+            } else if (numberPage == totalSlidepPage) {
+                next.hide();
+                prev.show();
+            } else {
+                next.show();
+                prev.show();
+            }
+        }
+    } else {
+        $("#pagin").hide(); // Hide pagination if less than or equal to 20 documents-tab elements
+    }
+}
+
+function updateDocumentCounts() {
+    var visibleDocListCount = $(".doc-list:visible").length;
+    var visibleDocumentsTabCount = $(".documents-tab:visible").length;
+
+    $("#document-count").text(visibleDocListCount + visibleDocumentsTabCount);
+    $("#total-documents").text($(".doc-list, .documents-tab").length);
+}
+
+$(".clear-btn").click(function () {
+    $(".doc-list, .documents-tab").show();
+    $("#pagin").show();
+    updateDocumentCounts();
+});
+
+$(".tab").click(function () {
+    $("#pagin").hide();
+});
+
+// Setup pagination on page load
+setupPagination();
+
+showPage = function (page) {
+    $(".doc-list, .documents-tab").hide();
+
+    // Show doc-list elements
+    $(".doc-list").each(function (n) {
+        if (n >= pageSizeDocList * (page - 1) && n < pageSizeDocList * page) {
+            $(this).show();
+        }
+    });
+
+    // Show documents-tab elements
+    $(".documents-tab").each(function (n) {
+        if (n >= pageSizeDocumentsTab * (page - 1) && n < pageSizeDocumentsTab * page) {
+            $(this).show();
+        }
+    });
+
+    updateDocumentCounts();
+}
+
+showPage(1);
+$("#pagin li a").eq(0).addClass("current");
+
+$("#pagin li a").click(function () {
+    $("#pagin li a").removeClass("current");
+    $(this).addClass("current");
+    showPage(parseInt($(this).text()));
+});
+
+// Event listener for subcategory or system name items
+$(".subcategory-item, .system-name-item").click(function () {
+    $(".doc-list, .documents-tab").show();
+    $("#pagin").hide();
+});
+
+document.querySelector('.details-tab').addEventListener('click', function(event) {
+    const list = this.querySelector('.list');
+    const isInside = list.contains(event.target); // Check if clicked target is inside the list
+
+    if (!isInside) {
+        list.style.display = list.style.display === 'block' ? 'none' : 'block';
+    }
+});
+//Pagination end
+
+    
+});
+
+
+  // wrap doc-pair div js
+$(document).ready(function() {
+  // Loop through each category container
+  $('.doc-list, .documents-tab').each(function() {
+    var categoryContainer = $(this);
+    
+    // Select all elements within the current category container
+    var docInfos = categoryContainer.find('.doc-info');
+    var docDownloads = categoryContainer.find('.doc-download');
+    var cadDownloads = categoryContainer.find('.cad-download');
+    
+    if (docInfos.length === docDownloads.length) {
+      for (var i = 0; i < docInfos.length; i++) {
+        // Create a new container div
+        var docPair = $('<div class="doc-pair"></div>');
+        
+        // Append doc-info and doc-download to the new container
+        $(docInfos[i]).appendTo(docPair);
+        $(docDownloads[i]).appendTo(docPair);
+        
+        // Conditionally append cad-download if it exists for this index
+        if (cadDownloads[i]) {
+          $(cadDownloads[i]).appendTo(docPair);
+        }
+        
+        // Append the new container to the parent category container
+        categoryContainer.append(docPair);
+        
+        // Set the data-doc-name attribute
+        var name = $(docInfos[i]).children().html();
+        var url = $(docDownloads[i]).find('.checkbox_field input');
+        var urlforcadd = $(cadDownloads[i]).find('.checkbox_field input');
+        $(url).attr("data-doc-name", name);$(urlforcadd).attr("data-doc-name", name);
+      }
+    } else {
+      console.log("Mismatch in the number of doc-info and doc-download elements");
+    }
+  });
+});
+
+
+// Event handler for the clear filter button
+  document.querySelector('.clear-btn').addEventListener('click', function() {
+    // Reset all filter variables
+    selectedCategory = null;
+    selectedSubcategory = null;
+    selectedSystemName = null;
+    selectedTabName = null;
+
+    // Clear active filters display
+    const activeFilters = document.querySelectorAll('.active-filter');
+    activeFilters.forEach(function(filter) {
+      filter.remove();
+    });
+
+    // Reset search input value
+    document.querySelector('.search-action input').value = '';
+
+    // Show all documents
+    document.querySelectorAll('.documents-tab').forEach(function(doc) {
+      doc.style.display = 'block';
+    });
+
+    // Reset document count display
+    const totalDocuments = document.querySelectorAll('.documents-tab').length;
+    document.getElementById('document-count').innerText = `1 - ${totalDocuments}`;
+
+    // Update selected tab if any
+    const activeTab = document.querySelector('.tab.active');
+    if (activeTab) {
+      activeTab.classList.remove('active');
+    }
+
+    // Show document container and tabbing list section
+    document.querySelector('#document-container').style.display = 'block';
+    document.querySelector('.tabbing-list-sec').style.display = 'block';
+
+    // Update active filters display
+    updateActiveFilters();
+  });
+
+// Function to update active filters display
+function updateActiveFilters() {
+  const catTags = document.querySelector('.cat-tags');
+  catTags.innerHTML = ''; // Clear current active filters
+
+  if (selectedCategory) {
+    catTags.innerHTML += `<span class="active-filter">${selectedCategory} <span class="clear"><i class="fa fa-times" aria-hidden="true"></i></span></span>`;
+  }
+  if (selectedSubcategory) {
+    catTags.innerHTML += `<span class="active-filter">${selectedSubcategory} <span class="clear"><i class="fa fa-times" aria-hidden="true"></i></span></span>`;
+  }
+  if (selectedSystemName) {
+    catTags.innerHTML += `<span class="active-filter">${selectedSystemName} <span class="clear"><i class="fa fa-times" aria-hidden="true"></i></span></span>`;
+  }
+  if (selectedTabName) {
+    catTags.innerHTML += `<span class="active-filter">${selectedTabName} <span class="clear"><i class="fa fa-times" aria-hidden="true"></i></span></span>`;
+  }
+
+  // Attach event listeners to the clear buttons of the active filters
+  const clearButtons = document.querySelectorAll('.active-filter .clear');
+  clearButtons.forEach(function(button) {
+    button.addEventListener('click', function() {
+      // Remove the parent active-filter span
+      this.parentElement.remove();
+
+      // Reset corresponding filter variables based on the filter removed
+      if (this.parentElement.textContent.includes(selectedCategory)) {
+        selectedCategory = null;
+      }
+      if (this.parentElement.textContent.includes(selectedSubcategory)) {
+        selectedSubcategory = null;
+      }
+      if (this.parentElement.textContent.includes(selectedSystemName)) {
+        selectedSystemName = null;
+      }
+      if (this.parentElement.textContent.includes(selectedTabName)) {
+        selectedTabName = null;
+      }
+
+      // Update document display and count based on the updated filters
+      filterDocuments();
+    });
+  });
+}
+
+// Function to filter documents based on selected filters
+  function filterDocuments() {
+    const documents = document.querySelectorAll('.documents-tab');
+    let visibleDocumentsCount = 0;
+
+    documents.forEach(function(doc) {
+      const matchesCategory = selectedCategory ? doc.classList.contains(selectedCategory) : true;
+      const matchesSubcategory = selectedSubcategory ? doc.classList.contains(selectedSubcategory) : true;
+      const matchesSystemName = selectedSystemName ? doc.classList.contains(selectedSystemName) : true;
+      const matchesTabName = selectedTabName ? doc.classList.contains(selectedTabName) : true;
+
+      if (matchesCategory && matchesSubcategory && matchesSystemName && matchesTabName) {
+        doc.style.display = 'block';
+        visibleDocumentsCount++;
+      } else {
+        doc.style.display = 'none';
+      }
+    });
+
+    document.getElementById('document-count').innerText = `1 - ${visibleDocumentsCount}`;
+  }
+
+  $(".mobile-filters_title").click(function(){
+      $(".drpdown-filters").toggleClass("mobile-filter-active");
+  });
+{% endjavascript %}
+
+{% style %}
+          /* Add your existing styles here */
+        h2.title {
+            font-weight: 600;
+        }
+        .search-action.filter-search {
+            position: relative;
+        }
+         .search-action.filter-search .icon.icon-search {
+            width: 20px;
+            height: 20px;
+            position: absolute;
+            right: 10px;
+            top: 15px;
+        }
+            .search-action input {
+              width: 100%;
+              height: 48px;
+              padding: 20px;
+          }
+            .product-doc-filter .row {
+              display: flex;
+              gap: 25px;
+            }
+            .left-col.category-col {
+              flex: 0 0 34%;
+              height: 100%;
+              position: sticky;
+              top: 0;
+              background: #f7f7f7;
+            }
+            .right-col.doc-col {
+              flex: 1 0 0;
+            }
+            .product-doc-filter {
+              margin: 50px 0;
+            }
+            .result-row {
+              display: flex;
+              gap: 20px;
+              flex-wrap: wrap;
+              margin: 20px 0;
+            }
+          button.clear-btn {
+            background: #003894;
+            padding: 10px 15px;
+            border: unset;
+            color: #fff;
+            font-weight: 600;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+          span.active-filter {
+            border: 1px solid #003894;
+            padding: 5px;
+            border-radius: 5px;
+            font-size: 10px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cat-tags {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        span.clear {
+            font-size: 14px;
+            cursor: pointer;
+        }
+            .doc-col .heading-row {
+              display: flex;
+              justify-content: space-between;
+              padding: 15px 15px;
+              background: #003894;
+              color: #fff;
+              font-weight: 800;
+            }
+            .document-listing .doc-list {
+              padding: 0px 15px;
+              display: flex;
+              justify-content: space-between;
+              flex-direction: column;
+            }
+            .tabbing-list-sec{
+              padding:0px 20px;
+            }
+            .doc-box {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 10px;
+
+            }
+            .documents-tab .doc-box {
+              font-weight: 800;
+              border-bottom: 1px solid #ddd;
+              margin: 0;
+            }
+            .doc-download {
+              display: flex;
+              align-items: center;
+              gap: 25px;
+              order:3;
+            }
+            .checkbox_field .doc-checkbox {
+              display: block;
+              width: 25px;
+              height: 25px;
+              margin: 0;
+            }
+            .cat-list .category-item {
+              cursor: pointer;
+            }
+            .cat-list .subcategory-item {
+              cursor: pointer;
+            }
+            .selected-doc span {
+              margin-right: 10px;
+            }
+            .download-btn {
+              padding: 20px;
+              background: unset;
+              font-size: 14px;
+              font-weight: 600;
+              cursor: pointer;
+            }
+            .selected-docs {
+              margin-top: 20px;
+              border: 2px solid #ddd;
+              position: fixed;
+              right: 0;
+              bottom: 0;
+              background: #fff;
+              margin-top: 20px;
+              z-index: 1;
+            }
+            #selected-docs-list {
+              padding: 20px 0;
+              max-height: 400px;
+              overflow-y: auto;
+            }
+            .selected-docs .top-bar {
+              display: flex;
+              align-items: center;
+              background: #003894;
+              color: #fff;
+              gap: 18px;
+              cursor: pointer;
+              justify-content: space-between;
+              padding: 0px 24px;
+            }
+            .top-bar h3 {
+              color: #fff;
+              font-size: 16px;
+              font-weight: 800;
+            }
+            .selected-docs .mylist-box {
+              padding: 20px;
+            }
+            .selected-doc-active .mylist-box {
+            }
+            .left-col,.right-col {
+              padding: 15px
+            }
+            ul {
+              padding-left: 15px
+            }
+            .left-col.category-col li {
+            font-size: 16px;
+            color: #000;
+            padding: 10px 0;
+            font-weight: 600;
+            cursor: pointer;
+            }
+            .left-col.category-col li span {
+              display: flex;
+              align-items: center;
+              gap: 15px;
+            }
+            .left-col.category-col li.subcategory-item {
+            color: #000000c4 !important;
+            }
+            .left-col.category-col li.system-name {
+            color: #00000085 !important;
+            }
+           .doc-pair {
+             display: flex;
+             justify-content: space-between;
+             width: 100%;
+             gap:20px;
+             align-items:center;
+             font-weight:800;
+             border-bottom: 1px solid #ddd;
+             padding: 15px 0;
+             margin: 0;
+          }
+
+          .doc-info{
+            flex: 3;
+          }
+
+            .doc-box{
+              flex-wrap: wrap;
+            }
+
+      .doc-info span.tag {
+        font-weight: 400;
+        margin-top: 15px;
+        display: inline-block;
+      }
+      .cad-download {
+        order: 2;
+      }
+    ul#pagin {
+      display: flex;
+      list-style: none;
+      gap: 10px;
+      justify-content: center;
+      margin: 30px 0;
+  }
+
+  ul#pagin a {
+      text-decoration: none;
+      padding: 10px 14px;
+      color: #000000b3;
+      font-size: 18px;
+  }
+
+  ul#pagin  a.current {color: #003894;font-weight: 800;}
+   .details-tab .list {
+            display: none;
+        }
+  @media(max-width: 767px){
+     .product-doc-filter .row {
+        flex-direction: column;
+     }
+    .left-col.category-col{
+       position:unset;
+    }
+    .mobile-filters_title{
+        display: flex !important;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 800 !important;
+        font-size: 18px;
+        background: #003894;
+        color: #fff;
+        padding: 15px 20px;
+    }
+    h2.title, .drpdown-filters{
+      display:none;
+    }
+    .drpdown-filters.mobile-filter-active{
+      display:block;
+    }
+    i.fa.fa-chevron-right {
+    float: right;
+    }
+    #selected-docs-list {
+    max-height: 200px;
+    overflow-y: auto;
+   }
+    .doc-pair img {
+      width: 35px;
+    }
+  }
+  @media(max-width:420px){
+      .doc-pair{
+      flex-wrap: wrap;
+      gap:10px;
+        justify-content: unset;
+    }
+    .doc-info {
+       flex: 0 0 100%;
+    }
+  }
+{% endstyle %}
+<div class="product-doc-filter">
+  <div class="page-width">
+    <div class="row">
+      <div class="left-col category-col">
+        <div class="search-bar">
+          <div class="search-action filter-search">
+            <svg class="icon icon-search" aria-hidden="true" focusable="false">
+                <use href="#icon-search">
+              </use>
+            </svg>
+            <input type="search" placeholder="Search Documents">
+          </div>
+        </div>
+        <div class="cat-list">
+          <h2 class="title">Document Type</h2>
+          <p class="mobile-filters_title" style="display:none">Filter <i class="fa fa-chevron-down"></i></p>
+          <ul class="drpdown-filters">
+            <li id="details-tab" class="details-tab">
+              Details <i class="fa fa-chevron-right"></i>
+
+              <ul class="list">
+                {% for collection in collections %}
+                  {% if collection.metafields.custom.sub_collection.value != blank %}
+                    <li class="category-item" data-category="{{ collection.title }}">
+                      {{- collection.title }}
+                      <i class="fa fa-chevron-right"></i>
+
+                      <ul class="sub-list" style="display: none;">
+                        {% for subcollection in collection.metafields.custom.sub_collection.value %}
+                          <li class="subcategory-item" data-subcategory="{{ subcollection.title }}">
+                            {{- subcollection.title }}
+                            <i class="fa fa-chevron-right"></i>
+                            <ul class="system-list" style="display: none;">
+                              {% for product in subcollection.products %}
+                                <li class="system-name" data-product="{{ product.title }}">{{ product.title }}</li>
+                              {% endfor %}
+                            </ul>
+                          </li>
+                        {% endfor %}
+                      </ul>
+                    </li>
+                  {% endif %}
+                {% endfor %}
+              </ul>
+            </li>
+            <li class="tab" id="specifications">Specifications <i class="fa fa-chevron-right"></i></li>
+            <li class="tab" id="testing-approval">Testing and Approvals <i class="fa fa-chevron-right"></i></li>
+            <li class="tab" id="technical-data">Technical Data Sheets <i class="fa fa-chevron-right"></i></li>
+            <li class="tab" id="safety-data">Safety Data Sheets <i class="fa fa-chevron-right"></i></li>
+            <li class="tab" id="application">Application Instructions <i class="fa fa-chevron-right"></i></li>
+            <li class="tab" id="technical-bulletins">Technical Bulletins <i class="fa fa-chevron-right"></i></li>
+            <li class="tab" id="literature">Literature <i class="fa fa-chevron-right"></i></li>
+          </ul>
+        </div>
+      </div>
+      <div class="right-col doc-col">
+        <div class="filter-cat">
+          <div class="filter-result">
+            <span> Showing <span id="document-count"></span> of <span id="total-documents"></span> results </span>
+            <div class="result-row">
+              <button type="button" class="clear-btn">Clear Filters</button>
+              <div class="cat-tags"></div>
+            </div>
+          </div>
+        </div>
+        <div class="document-listing">
+          <div class="heading-row">
+            <span>Document Title</span>
+            <span>Download <i class="fa fa-download" aria-hidden="true"></i></span>
+          </div>
+          <div id="document-container">
+            <!-- Details menu PDF starts -->
+            {% for collection in collections %}
+              {% for subcollection in collection.metafields.custom.sub_collection.value %}
+                {% assign dynamicsubcat = subcollection.title %}
+                {% assign collection_title = collection.title %}
+                {% assign subcol_title = subcollection.title %}
+                {% for product in subcollection.products %}
+                  <div
+                    class="doc-list"
+                    data-category="{{ collection_title }}"
+                    data-subcategory="{{ subcol_title }}"
+                    data-product="{{ product.title }}"
+                  >
+                    {% for doc in shop.metaobjects.documents.values %}
+                      {% assign jsonData = doc | parse_json %}
+
+                      {% assign selectedproduct = doc.select_system_product.value %}
+                      {% assign mycat = subcol_title %}
+                      {% assign mypro = product.title %}
+                      {% if mycat == dynamicsubcat and selectedproduct.title == mypro %}
+                        {% assign pdfNames = jsonData.detail_pdf_name.value %}
+                        {% assign pdfFiles = jsonData.detail_file.value %}
+                        {% assign cadFiles = jsonData.autocad_file.value %}
+
+                        <div class=" doc-box" data-subcategory="{{ subcol_title }}" data-product="{{ product.title }}">
+                          {% for pdfName in pdfNames %}
+                            {% assign pdfFileIndex = forloop.index0 %}
+                            {% assign pdfFile = pdfFiles[pdfFileIndex] %}
+                            {% assign pdfUrl = pdfFile.url %}
+                            {% if pdfName != blank %}
+                              <div class="doc-info">
+                                <div class="doc-name">{{ pdfName }}</div>
+                                <span class="tag">Details</span>
+                              </div>
+                            {% endif %}
+                          {% endfor %}
+
+                          {% for cadFile in cadFiles %}
+                            {% assign cadFileIndex = forloop.index0 %}
+                            {% assign cadFile = cadFiles[cadFileIndex] %}
+                            {% assign cadUrl = cadFile.url %}
+
+                            {% if cadUrl != blank %}
+                              <div class="cad-download" data-product="{{ product.title }}" name="{{}}">
+                                <a target="_blank" href="{{ cadUrl }}" class="doc_file">
+                                  <img width="60px" src="{{ 'cad-icon.png' | file_url }}" alt="pdf">
+                                </a>
+                              </div>
+                            {% endif %}
+                          {% endfor %}
+
+                          {% for pdfFile in pdfFiles %}
+                            {% assign pdfFileIndex = forloop.index0 %}
+                            {% assign pdfFile = pdfFiles[pdfFileIndex] %}
+                            {% assign pdfUrl = pdfFile.url %}
+
+                            {% if pdfUrl != blank %}
+                              <div class="doc-download" data-product="{{ product.title }}" name="{{}}">
+                                <a target="_blank" href="{{ pdfUrl }}" class="doc_file">
+                                  <img width="60px" src="{{ 'pdf-icon.png' | file_url }}" alt="pdf">
+                                </a>
+                                <div class="checkbox_field">
+                                  <input
+                                    type="checkbox"
+                                    class="doc-checkbox"
+                                    data-doc-name="{{}}"
+                                    data-doc-url="{{ pdfUrl }}"
+                                  >
+                                </div>
+                              </div>
+                            {% endif %}
+                          {% endfor %}
+                        </div>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                {% endfor %}
+              {% endfor %}
+            {% endfor %}
+            <!-- Details Menu PDF over -->
+          </div>
+
+          <div class="tabbing-list-sec">
+            {% for doc in shop.metaobjects.documents.values %}
+              {% if doc.specifications_name and doc.specifiactions_pdf != blank %}
+                <div class="documents-tab" id="specifications">
+                  <div class="doc-box">
+                    <div class="doc-info">
+                      <div class="doc-name">{{ doc.specifications_name }}</div>
+                      <span class="tag">specifications</span>
+                    </div>
+
+                    <div class="doc-download" name="{{}}">
+                      <a target="_blank" href="{{ doc.specifiactions_pdf | file_url }}" class="doc_file">
+                        <img width="60px" src="{{ 'pdf-icon.png' | file_url }}" alt="pdf">
+                      </a>
+                      <div class="checkbox_field">
+                        <input
+                          type="checkbox"
+                          class="doc-checkbox"
+                          data-doc-name="{{}}"
+                          data-doc-url="{{ pdfUrl }}"
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endif %}
+
+              <!-- TEsting and Approvals col start -->
+              {% if doc.testing_approvals_name and doc.testing_approvals_pdf != blank %}
+                <div class="documents-tab" id="testing-approval">
+                  <div class="doc-box">
+                    <div class="doc-info">
+                      <div class="doc-name">{{ doc.testing_approvals_name }}</div>
+                      <span class="tag">Testing and Approvals</span>
+                    </div>
+
+                    <div class="doc-download" name="{{}}">
+                      <a target="_blank" href="{{ doc.testing_approvals_pdf | file_url }}" class="doc_file">
+                        <img width="60px" src="{{ 'pdf-icon.png' | file_url }}" alt="pdf">
+                      </a>
+                      <div class="checkbox_field">
+                        <input
+                          type="checkbox"
+                          class="doc-checkbox"
+                          data-doc-name="{{}}"
+                          data-doc-url="{{ pdfUrl }}"
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endif %}
+
+              <!-- technical-data col start -->
+              {% if doc.product_document_name and doc.product_document_file != blank %}
+                <div class="documents-tab" id="technical-data">
+                  <div class="doc-box">
+                    <div class="doc-info">
+                      <div class="doc-name">{{ doc.product_document_name }}</div>
+                      <span class="tag">Technical Data Sheets</span>
+                    </div>
+
+                    <div class="doc-download" name="{{}}">
+                      <a target="_blank" href="{{ doc.product_document_file | file_url }}" class="doc_file">
+                        <img width="60px" src="{{ 'pdf-icon.png' | file_url }}" alt="pdf">
+                      </a>
+                      <div class="checkbox_field">
+                        <input
+                          type="checkbox"
+                          class="doc-checkbox"
+                          data-doc-name="{{}}"
+                          data-doc-url="{{ pdfUrl }}"
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endif %}
+              <!-- safety-data col start -->
+              {% if doc.safety_data_sheet_name and doc.system_technical_file != blank %}
+                <div class="documents-tab" id="safety-data">
+                  <div class="doc-box">
+                    <div class="doc-info">
+                      <div class="doc-name">{{ doc.safety_data_sheet_name }}</div>
+                      <span class="tag">Safety Data Sheets</span>
+                    </div>
+
+                    <div class="doc-download" name="{{}}">
+                      <a target="_blank" href="{{ doc.system_technical_file | file_url }}" class="doc_file">
+                        <img width="60px" src="{{ 'pdf-icon.png' | file_url }}" alt="pdf">
+                      </a>
+                      <div class="checkbox_field">
+                        <input
+                          type="checkbox"
+                          class="doc-checkbox"
+                          data-doc-name="{{}}"
+                          data-doc-url="{{ pdfUrl }}"
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endif %}
+              <!-- application col start -->
+              {% if doc.application_instructions_name and doc.application_instructions_pdf != blank %}
+                <div class="documents-tab" id="application">
+                  <div class="doc-box">
+                    <div class="doc-info">
+                      <div class="doc-name">{{ doc.application_instructions_name }}</div>
+                      <span class="tag">Application Instructions</span>
+                    </div>
+
+                    <div class="doc-download" name="{{}}">
+                      <a target="_blank" href="{{ doc.application_instructions_pdf | file_url }}" class="doc_file">
+                        <img width="60px" src="{{ 'pdf-icon.png' | file_url }}" alt="pdf">
+                      </a>
+                      <div class="checkbox_field">
+                        <input
+                          type="checkbox"
+                          class="doc-checkbox"
+                          data-doc-name="{{}}"
+                          data-doc-url="{{ pdfUrl }}"
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endif %}
+              <!-- technical-bulletins col start -->
+              {% if doc.technical_bulletins_name and doc.technical_bulletins_pdf != blank %}
+                <div class="documents-tab" id="technical-bulletins">
+                  <div class="doc-box">
+                    <div class="doc-info">
+                      <div class="doc-name">{{ doc.technical_bulletins_name }}</div>
+                      <span class="tag">Technical Bulletins </span>
+                    </div>
+
+                    <div class="doc-download" name="{{}}">
+                      <a target="_blank" href="{{ doc.technical_bulletins_pdf | file_url }}" class="doc_file">
+                        <img width="60px" src="{{ 'pdf-icon.png' | file_url }}" alt="pdf">
+                      </a>
+                      <div class="checkbox_field">
+                        <input
+                          type="checkbox"
+                          class="doc-checkbox"
+                          data-doc-name="{{}}"
+                          data-doc-url="{{ pdfUrl }}"
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endif %}
+              <!-- literature col start -->
+              {% if doc.literature_name and doc.literature_file != blank %}
+                <div class="documents-tab" id="literature">
+                  <div class="doc-box">
+                    <div class="doc-info">
+                      <div class="doc-name">{{ doc.literature_name }}</div>
+                      <span class="tag">Literature</span>
+                    </div>
+
+                    <div class="doc-download" name="{{}}">
+                      <a target="_blank" href="{{ doc.literature_file | file_url }}" class="doc_file">
+                        <img width="60px" src="{{ 'pdf-icon.png' | file_url }}" alt="pdf">
+                      </a>
+                      <div class="checkbox_field">
+                        <input
+                          type="checkbox"
+                          class="doc-checkbox"
+                          data-doc-name="{{}}"
+                          data-doc-url="{{ pdfUrl }}"
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+        <!-- Add pagination controls container -->
+        <ul id="pagin">
+          <!-- <div id="pagination-links"></div> -->
+        </ul>
+
+        <div class="selected-docs">
+          <div class="top-bar">
+            <h3>My Documents (<span id="selected-docs-count">0</span>)</h3>
+            <span style="font-size:35px; height:35px;">&#129171;</span>
+          </div>
+          <div class="mylist-box">
+            <div id="selected-docs-list"></div>
+            <button class="download-btn">Download Selected Files</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% schema %}
+{
+  "name": "custom-filter",
+  "settings": [],
+  "presets": [
+    {
+      "name": "custom-filter"
+    }
+  ]
+}
 {% endschema %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
