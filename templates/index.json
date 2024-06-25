@@ -412,7 +412,8 @@
       "type": "custom-collection-list",
       "settings": {
         "collection_list": [
-          "frontpage"
+          "frontpage",
+          "newest-collection"
         ]
       }
     }
