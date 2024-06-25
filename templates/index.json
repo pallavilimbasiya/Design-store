@@ -411,7 +411,6 @@
     },
     "custom_collection_list_BBmmG7": {
       "type": "custom-collection-list",
-      "disabled": true,
       "settings": {
         "collection_list": [
           "frontpage",
