@@ -14,20 +14,7 @@
  <h3>{{ product.title }}</h3>
  <h4>{{ product.price | money | remove: '.00' }}</h4>
  </li>
- {% endfor %}
-
-
-
-
-   <li class="slideshow-item">
-   {% for products in collections %}
-     
-{{ products.title }}
-{% endfor %}
-   </li>
-
-
-     
+ {% endfor %}     
  </ul> 
  </div><!-- #slideshow-container -->
  </div>
